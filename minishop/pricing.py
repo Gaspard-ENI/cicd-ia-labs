@@ -1,4 +1,3 @@
-
 """Règles de calcul du panier MiniShop.
 
 Règles métier (voir specs/pricing.feature) :
@@ -144,9 +143,7 @@ def quote(items: list[dict], coupon: str | None = None) -> Quote:
 
     q.subtotal = money(sum((ln.total for ln in q.lines), Decimal("0")))
 
-    q.discount = (
-        coupon_discount(q.subtotal, coupon) if q.lines else Decimal("0.00")
-    )
+    q.discount = coupon_discount(q.subtotal, coupon) if q.lines else Decimal("0.00")
 
     after = q.subtotal - q.discount
     q.shipping = shipping_cost(after, coupon, empty=not q.lines)

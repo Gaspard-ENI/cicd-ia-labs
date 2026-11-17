@@ -135,4 +135,3 @@ def test_bug_arrondi_detecte(monkeypatch):
     """Démontre que la suite détecte le bug injecté MINISHOP_BUG=rounding."""
     monkeypatch.setenv("MINISHOP_BUG", "rounding")
     assert money("0.125") != D("0.13")
-
