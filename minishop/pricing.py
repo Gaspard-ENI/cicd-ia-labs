@@ -18,6 +18,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
+
 from minishop.catalog import get_product
 
 CENT = Decimal("0.01")
