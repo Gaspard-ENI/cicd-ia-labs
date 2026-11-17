@@ -18,7 +18,6 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from decimal import ROUND_HALF_UP, Decimal
-
 from minishop.catalog import get_product
 
 CENT = Decimal("0.01")
@@ -27,7 +26,7 @@ FREE_SHIPPING_THRESHOLD = Decimal("50.00")
 BULK_QTY = 10
 BULK_RATE = Decimal("0.05")
 MAX_QTY = 99
-COUPONS = {"WELCOME10", "FIXED5", "FREESHIP","STUDENT15"}
+COUPONS = {"WELCOME10", "FIXED5", "FREESHIP", "STUDENT15"}
 
 def money(value: Decimal | float | int | str) -> Decimal:
     """Arrondit un montant au centime (arrondi commercial)."""
