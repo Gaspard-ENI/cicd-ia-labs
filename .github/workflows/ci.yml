@@ -1,24 +1,80 @@
+# SOLUTION Atelier 2 — Pipeline CI de base
 name: CI
+
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+
+concurrency:                      # annule le run précédent de la même branche
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
+        with: { python-version: "3.12" }
       - run: pip install ruff
-      - run: ruff check . --output-format=github
+      - run: ruff check . --output-format=github     # annotations dans la PR
       - run: ruff format --check .
-  test:
+
+  unit:
     needs: lint
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: {python-version: "3.12"}
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: requirements-dev.txt
       - run: pip install -r requirements-dev.txt
-      - run: pytest -m "unit or api"
+      - name: Tests unitaires + API en parallèle (xdist)
+        run: >
+          pytest -m "unit or api" -n auto
+          --cov --cov-report=xml --cov-report=html --cov-fail-under=85
+          --junitxml=reports/junit-${{ matrix.python }}.xml
+      - uses: actions/upload-artifact@v4
+        if: always()                                   # même si les tests échouent
+        with:
+          name: test-reports-${{ matrix.python }}
+          path: |
+            reports/
+            htmlcov/
+            coverage.xml
+      - name: Résumé dans la page du run
+        if: always() && matrix.python == '3.12'
+        run: |
+          echo "### Couverture" >> "$GITHUB_STEP_SUMMARY"
+          python -m coverage report --format=markdown >> "$GITHUB_STEP_SUMMARY"
+  # Exécution DANS un conteneur : même image partout, indépendante du runner
+  container-tests:
+    needs: lint
+    runs-on: ubuntu-latest
+    container: python:3.12-slim
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -r requirements-dev.txt
+      - run: pytest -m unit -q
+  docker:
+    needs: unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t minishop:${{ github.sha }} .
+      - name: Smoke test du conteneur
+        run: |
+          docker run -d -p 8000:8000 --name app minishop:${{ github.sha }}
+          timeout 30 bash -c 'until curl -sf localhost:8000/health; do sleep 1; done'
+          curl -sf localhost:8000/products | grep -q mug

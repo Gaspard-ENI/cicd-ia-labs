@@ -38,7 +38,7 @@ def test_line_total_sans_remise():
 
 
 def test_remise_volume_a_partir_de_10():
-    assert line_total(D("2.45"), 10) == D("23.28")  # 24.50 * 0.95 = 23.275 -> 23.28
+    assert line_total(D("2.45"), 10) == D("23.28")
 
 
 def test_pas_de_remise_volume_a_9():
@@ -60,14 +60,14 @@ def test_quantite_bornes_valides(qty):
 @pytest.mark.parametrize(
     "subtotal, coupon, expected",
     [
-        ("20.00", "WELCOME10", "2.00"),  # seuil inclus
-        ("19.99", "WELCOME10", "0.00"),  # sous le seuil
+        ("20.00", "WELCOME10", "2.00"),
+        ("19.99", "WELCOME10", "0.00"),
         ("30.00", "FIXED5", "5.00"),
         ("29.99", "FIXED5", "0.00"),
-        ("100.00", "FREESHIP", "0.00"),  # FREESHIP n'est pas une remise sur le montant
+        ("100.00", "FREESHIP", "0.00"),
         ("50.00", None, "0.00"),
         ("50.00", "", "0.00"),
-        ("40.00", " welcome10 ", "4.00"),  # casse et espaces tolérés
+        ("40.00", " welcome10 ", "4.00"),
     ],
 )
 def test_coupon_discount(subtotal, coupon, expected):
@@ -103,13 +103,19 @@ def test_quote_complet_avec_welcome10():
     q = quote([{"product_id": "mug", "qty": 2}], "WELCOME10")
     assert q.subtotal == D("25.00")
     assert q.discount == D("2.50")
-    assert q.shipping == SHIPPING_FEE  # 22.50 < 50
+    assert q.shipping == SHIPPING_FEE
     assert q.total == D("27.40")
 
 
 def test_livraison_calculee_apres_remise():
-    """52 € de sous-total -10 % = 46.80 € -> la livraison redevient payante."""
-    q = quote([{"product_id": "hoodie", "qty": 1}, {"product_id": "sticker", "qty": 3}], "WELCOME10")
+    """52 € de sous-total -10 % = 46.80 € -> livraison payante."""
+    q = quote(
+        [
+            {"product_id": "hoodie", "qty": 1},
+            {"product_id": "sticker", "qty": 3},
+        ],
+        "WELCOME10",
+    )
     assert q.subtotal == D("51.35")
     assert q.shipping == SHIPPING_FEE
 
@@ -121,10 +127,12 @@ def test_produit_inconnu():
 
 def test_as_dict_serialisable():
     d = quote([{"product_id": "book", "qty": 1}]).as_dict()
-    assert d["total"] == "34.89" and d["lines"][0]["product_id"] == "book"
+    assert d["total"] == "34.89"
+    assert d["lines"][0]["product_id"] == "book"
 
 
 def test_bug_arrondi_detecte(monkeypatch):
-    """Démontre que la suite attrape le bug injecté MINISHOP_BUG=rounding."""
+    """Démontre que la suite détecte le bug injecté MINISHOP_BUG=rounding."""
     monkeypatch.setenv("MINISHOP_BUG", "rounding")
     assert money("0.125") != D("0.13")
+
