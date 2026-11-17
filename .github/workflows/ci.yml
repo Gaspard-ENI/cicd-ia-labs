@@ -4,6 +4,20 @@ on:
     branches: [main]
   pull_request:
 jobs:
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install ruff
+      - run: ruff check . --output-format=github     # annotations dans la PR
+      - run: ruff format --check .
+
+  unit:
+    needs: lint
+
   test:
     runs-on: ubuntu-latest
     steps:

@@ -31,12 +31,12 @@ COUPONS = {"WELCOME10", "FIXED5", "FREESHIP","STUDENT15"}
 
 
 def money(value: Decimal | float | int | str) -> Decimal:
-    """Arrondit un montant au centime (arrondi commercial)."""
-    d = Decimal(str(value))
-    # Bug injectable pour les démos de régression (MINISHOP_BUG=rounding)
-    if os.getenv("MINISHOP_BUG") == "rounding":
-        return d.quantize(CENT)  # ROUND_HALF_EVEN par défaut : 0.125 -> 0.12
-    return d.quantize(CENT, rounding=ROUND_HALF_UP)
+    # """Arrondit un montant au centime (arrondi commercial)."""
+    # d = Decimal(str(value))
+    # # Bug injectable pour les démos de régression (MINISHOP_BUG=rounding)
+    # if os.getenv("MINISHOP_BUG") == "rounding":
+    #     return d.quantize(CENT)  # ROUND_HALF_EVEN par défaut : 0.125 -> 0.12
+    # return d.quantize(CENT, rounding=ROUND_HALF_UP)
 
 
 @dataclass
