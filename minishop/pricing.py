@@ -29,7 +29,6 @@ BULK_RATE = Decimal("0.05")
 MAX_QTY = 99
 COUPONS = {"WELCOME10", "FIXED5", "FREESHIP","STUDENT15"}
 
-
 def money(value: Decimal | float | int | str) -> Decimal:
     """Arrondit un montant au centime (arrondi commercial)."""
     d = Decimal(str(value))
