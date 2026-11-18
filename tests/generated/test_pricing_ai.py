@@ -1,6 +1,7 @@
-import pytest
 from decimal import Decimal
 from types import SimpleNamespace
+
+import pytest
 
 from minishop import pricing
 from minishop.pricing import line_total, money, quote
