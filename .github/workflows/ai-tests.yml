@@ -1,0 +1,43 @@
+name: IA - tests
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write    # pour commenter la PR
+
+jobs:
+
+  generate-tests:
+    name: Génération des tests par IA
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v4
+
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances
+        run: pip install -r requirements-dev.txt
+
+      - name: Générer les tests
+        continue-on-error: true
+        run: python ai_tools/generate_tests.py
+        env:
+          LLM_PROVIDER: anthropic
+          LLM_MODEL: claude-haiku-5-5
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: Publier les tests générés
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tests-generes
+          path: tests/generated/
+          if-no-files-found: ignore
