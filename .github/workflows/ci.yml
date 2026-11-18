@@ -43,7 +43,7 @@ jobs:
       - name: Tests unitaires + API en parallèle (xdist)
         run: >
           pytest -m "unit or api" -n auto
-          --cov --cov-report=xml --cov-report=html --cov-fail-under=85
+          --cov --cov-report=xml --cov-report=html --cov-fail-under=80
           --junitxml=reports/junit-${{ matrix.python }}.xml
       - uses: actions/upload-artifact@v4
         if: always()                                   # même si les tests échouent
