@@ -1,21 +1,47 @@
-"""Test E2E Playwright — POINT DE DÉPART (Atelier 8).
-
-Prérequis : application lancée (make run) ; BASE_URL=http://localhost:8000 par défaut.
-Lancer :   pytest -m e2e --headed        (pour voir le navigateur)
-"""
 
 import re
-
 import pytest
 from playwright.sync_api import Page, expect
+from tests.e2e.pages.shop_page import ShopPage
 
 pytestmark = pytest.mark.e2e
 
 
-def test_page_accueil(page: Page, app_url):
+@pytest.fixture
+def shop(page: Page, app_url):
     page.goto(app_url)
-    expect(page).to_have_title(re.compile("MiniShop"))
-    expect(page.get_by_test_id("products").locator("li")).to_have_count(5)
+    return ShopPage(page)
+
+def test_page_accueil(shop):
+    expect(shop.page).to_have_title(re.compile("MiniShop"))
+    expect(shop.page.get_by_test_id("products").locator("li")).to_have_count(5)
+
+def test_parcours_achat(shop):
+    # Ajouter deux mugs
+    shop.add("mug")
+    shop.add("mug")
+
+    # Appliquer la réduction
+    shop.apply_coupon("WELCOME10")
+
+    # Vérifier le total
+    expect(shop.total()).to_be_visible()
+
+    # Commander
+    shop.order()
 
 
-# TODO Atelier 8 : ajouter 2 mugs, appliquer WELCOME10, vérifier le total, commander.
+def test_coupon_invalide(shop):
+    shop.add("mug")
+    shop.apply_coupon("TEST")
+
+    expect(shop.page.get_by_role("alert")).to_have_text(
+        "Coupon inconnu : TEST"
+    )
+
+
+def test_commander_desactive_si_panier_vide(shop):
+    expect(shop.page.get_by_test_id("order-btn")).to_be_disabled()
+    shop.add("mug")
+    expect(shop.page.get_by_test_id("order-btn")).to_be_enabled()
+
