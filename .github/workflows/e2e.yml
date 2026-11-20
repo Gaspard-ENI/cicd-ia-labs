@@ -1,0 +1,65 @@
+
+name: Tests E2E Playwright
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox]
+
+    steps:
+      # 1. Récupérer le code du projet
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Installer Python
+      - name: Installer Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # 3. Installer les dépendances
+      - name: Installer les dépendances
+        run: |
+              python -m pip install --upgrade pip
+              python -m pip install -r requirements-dev.txt
+
+      # 4. Installer le navigateur Playwright
+      - name: Installer Playwright
+        run: |
+          python -m playwright install --with-deps ${{ matrix.browser }}
+
+      # 5. Démarrer l'application
+      - name: Démarrer l'application
+        run: |
+          make run > app.log 2>&1 &
+
+      # 6. Attendre que l'application soit disponible
+      - name: Attendre le démarrage
+        run: |
+          timeout 30 bash -c 'until curl -sf localhost:8000/health; do sleep 1; done'
+
+      # 7. Lancer les tests E2E
+      - name: Exécuter les tests
+        run: |
+          pytest -m e2e \
+            --browser ${{ matrix.browser }} \
+            --tracing retain-on-failure \
+            --video retain-on-failure \
+            --output test-results
+
+      # 8. Récupérer les résultats en cas d'échec
+      - name: Archiver les résultats
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: test-results/
+          if-no-files-found: ignore

@@ -40,9 +40,16 @@ def _gray(a: np.ndarray) -> np.ndarray:
 
 
 def ssim(x: np.ndarray, y: np.ndarray, win: int = 8) -> float:
-    """SSIM moyen sur fenêtres non chevauchantes (implémentation pédagogique)."""
+    """SSIM moyen sur fenêtres non chevauchantes."""
+    # Si les images sont en RGB, calculer le SSIM sur chaque canal
+    if x.ndim == 3:
+        scores = []
+        for c in range(3):
+            scores.append(ssim(x[:, :, c], y[:, :, c], win))
+        return float(np.mean(scores))
     c1, c2 = (0.01 * 255) ** 2, (0.03 * 255) ** 2
-    h, w = (x.shape[0] // win) * win, (x.shape[1] // win) * win
+    h = (x.shape[0] // win) * win
+    w = (x.shape[1] // win) * win
     xb = x[:h, :w].reshape(h // win, win, w // win, win).swapaxes(1, 2).reshape(-1, win * win)
     yb = y[:h, :w].reshape(h // win, win, w // win, win).swapaxes(1, 2).reshape(-1, win * win)
     mx, my = xb.mean(1), yb.mean(1)
@@ -63,7 +70,8 @@ def compare(baseline: Path, current: Path, diff_out: Path | None = None, toleran
         out[changed] = [255, 0, 255]
         diff_out.parent.mkdir(parents=True, exist_ok=True)
         Image.fromarray(out).save(diff_out)
-    return VisualResult(float(changed.mean()), ssim(_gray(a), _gray(b)), False)
+    ssim_rgb = min(ssim(a[..., c], b[..., c]) for c in range(3))  
+    return VisualResult(float(changed.mean()), ssim_rgb, False)
 
 
 def main() -> int:
